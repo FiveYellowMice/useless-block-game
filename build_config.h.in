@@ -1,0 +1,6 @@
+#ifndef _CONFIG_H_
+#define _CONFIG_H_
+
+#cmakedefine APP_RESOURCE_PATH "@APP_RESOURCE_PATH@"
+
+#endif
