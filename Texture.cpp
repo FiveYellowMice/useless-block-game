@@ -11,6 +11,10 @@ Texture::Texture(GLenum type_) {
   glGenTextures(1, &id);
 }
 
+Texture::~Texture() {
+  glDeleteTextures(1, &id);
+}
+
 void Texture::bind() {
   glBindTexture(type, id);
 }

@@ -11,6 +11,7 @@ public:
   GLenum type;
 
   Shader(GLenum type_);
+  ~Shader();
 
   void loadFromString(const char* source);
   void loadFromString(const std::string& source);

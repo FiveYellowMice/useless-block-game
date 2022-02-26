@@ -11,6 +11,7 @@ public:
   GLenum type;
 
   Texture(GLenum type_);
+  ~Texture();
 
   void bind();
   void loadFromFile(const std::string& filename);

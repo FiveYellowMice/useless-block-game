@@ -1,4 +1,6 @@
 #include <iostream>
+#include <vector>
+#include <memory>
 #include <cstdlib>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
@@ -9,49 +11,9 @@
 #include "ApplicationException.hpp"
 #include "Shader.hpp"
 #include "Texture.hpp"
+#include "BlockType.hpp"
 #include "main.hpp"
 #include "build_config.h"
-
-Vertex vertices[] = {
-  { -1.f, -1.f,  1.f,  0.f,  0.f,  1.f, 0.5f, 0.5f },
-  { -1.f,  1.f,  1.f,  0.f,  0.f,  1.f, 0.5f, 0.0f },
-  {  1.f, -1.f,  1.f,  0.f,  0.f,  1.f, 1.0f, 0.5f },
-  {  1.f,  1.f,  1.f,  0.f,  0.f,  1.f, 1.0f, 0.0f },
-
-  { -1.f, -1.f, -1.f,  0.f,  0.f, -1.f, 0.5f, 0.5f },
-  { -1.f,  1.f, -1.f,  0.f,  0.f, -1.f, 0.5f, 0.0f },
-  {  1.f, -1.f, -1.f,  0.f,  0.f, -1.f, 1.0f, 0.5f },
-  {  1.f,  1.f, -1.f,  0.f,  0.f, -1.f, 1.0f, 0.0f },
-
-  {  1.f, -1.f, -1.f,  1.f,  0.f,  0.f, 0.5f, 0.5f },
-  {  1.f,  1.f, -1.f,  1.f,  0.f,  0.f, 0.5f, 0.0f },
-  {  1.f, -1.f,  1.f,  1.f,  0.f,  0.f, 1.0f, 0.5f },
-  {  1.f,  1.f,  1.f,  1.f,  0.f,  0.f, 1.0f, 0.0f },
-
-  { -1.f, -1.f, -1.f, -1.f,  0.f,  0.f, 0.5f, 0.5f },
-  { -1.f,  1.f, -1.f, -1.f,  0.f,  0.f, 0.5f, 0.0f },
-  { -1.f, -1.f,  1.f, -1.f,  0.f,  0.f, 1.0f, 0.5f },
-  { -1.f,  1.f,  1.f, -1.f,  0.f,  0.f, 1.0f, 0.0f },
-
-  { -1.f,  1.f,  1.f,  0.f,  1.f,  0.f, 0.0f, 0.0f },
-  { -1.f,  1.f, -1.f,  0.f,  1.f,  0.f, 0.0f, 0.5f },
-  {  1.f,  1.f,  1.f,  0.f,  1.f,  0.f, 0.5f, 0.0f },
-  {  1.f,  1.f, -1.f,  0.f,  1.f,  0.f, 0.5f, 0.5f },
-
-  { -1.f, -1.f,  1.f,  0.f, -1.f,  0.f, 0.0f, 0.0f },
-  { -1.f, -1.f, -1.f,  0.f, -1.f,  0.f, 0.0f, 1.0f },
-  {  1.f, -1.f,  1.f,  0.f, -1.f,  0.f, 0.5f, 0.5f },
-  {  1.f, -1.f, -1.f,  0.f, -1.f,  0.f, 0.5f, 1.0f },
-};
-
-GLuint vertexIndices[] = {
-   3,  1,  2,  2,  1,  0,
-   4,  5,  6,  6,  5,  7,
-   8,  9, 10, 10,  9, 11,
-  15, 13, 14, 14, 13, 12,
-  19, 17, 18, 18, 17, 16,
-  20, 21, 22, 22, 21, 23,
-};
 
 int main(int argc, char* argv[]) {
   (void) argc;
@@ -98,6 +60,78 @@ int main(int argc, char* argv[]) {
     glfwSwapInterval(1);
     glEnable(GL_CULL_FACE);
 
+    // Define block types
+
+    std::vector<std::unique_ptr<BlockType>> blockTypes;
+    blockTypes.push_back(std::make_unique<BlockType>("grass_block", std::array<std::array<float, 2>, 24>{{
+      {0.5f, 0.5f}, {1.0f, 0.5f}, {0.5f, 0.0f}, {1.0f, 0.0f}, // +X
+      {0.5f, 0.5f}, {1.0f, 0.5f}, {0.5f, 0.0f}, {1.0f, 0.0f}, // -X
+      {0.0f, 0.5f}, {0.5f, 0.5f}, {0.0f, 0.0f}, {0.5f, 0.0f}, // +Y
+      {0.0f, 1.0f}, {0.5f, 1.0f}, {0.0f, 0.5f}, {0.5f, 0.5f}, // -Y
+      {0.5f, 0.5f}, {1.0f, 0.5f}, {0.5f, 0.0f}, {1.0f, 0.0f}, // +Z
+      {0.5f, 0.5f}, {1.0f, 0.5f}, {0.5f, 0.0f}, {1.0f, 0.0f}, // -Z
+    }}));
+    blockTypes.push_back(std::make_unique<BlockType>("stone", std::array<std::array<float, 2>, 24>{{
+      {0.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f},
+      {0.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f},
+      {0.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f},
+      {0.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f},
+      {0.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f},
+      {0.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f},
+    }}));
+
+    // Construct block mesh
+
+    const BlockType* displayedBlock = blockTypes[1].get();
+
+    std::vector<Vertex> vertices = {
+      // +X
+      { 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 0.f, 0.f},
+      { 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 0.f, 0.f},
+      { 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 0.f, 0.f},
+      { 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 0.f, 0.f},
+      // -X
+      {-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 0.f, 0.f},
+      {-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 0.f, 0.f},
+      {-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 0.f, 0.f},
+      {-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 0.f, 0.f},
+      // +Y
+      {-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 0.f, 0.f},
+      { 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 0.f, 0.f},
+      {-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.f, 0.f},
+      { 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.f, 0.f},
+      // -Y
+      { 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 0.f, 0.f},
+      {-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 0.f, 0.f},
+      { 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.f, 0.f},
+      {-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.f, 0.f},
+      // +Z
+      {-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.f, 0.f},
+      { 0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.f, 0.f},
+      {-0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.f, 0.f},
+      { 0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.f, 0.f},
+      // -Z
+      { 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.f, 0.f},
+      {-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.f, 0.f},
+      { 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.f, 0.f},
+      {-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.f, 0.f},
+    };
+    for (size_t i = 0; i < displayedBlock->vertex_texture_coordinates.size(); i++) {
+      vertices[i].u = displayedBlock->vertex_texture_coordinates[i][0];
+      vertices[i].v = displayedBlock->vertex_texture_coordinates[i][1];
+    }
+
+    std::vector<GLuint> vertexIndices;
+    vertexIndices.reserve(vertices.size() / 4 * 6);
+    for (size_t i = 0; i < vertices.size() / 4; i++) {
+      vertexIndices.push_back(i * 4 + 0);
+      vertexIndices.push_back(i * 4 + 1);
+      vertexIndices.push_back(i * 4 + 2);
+      vertexIndices.push_back(i * 4 + 1);
+      vertexIndices.push_back(i * 4 + 3);
+      vertexIndices.push_back(i * 4 + 2);
+    }
+
     GLuint vertexArrayId;
     glGenVertexArrays(1, &vertexArrayId);
     glBindVertexArray(vertexArrayId);
@@ -105,22 +139,17 @@ int main(int argc, char* argv[]) {
     GLuint vertexBufferId;
     glGenBuffers(1, &vertexBufferId);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBufferId);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(decltype(vertices)::value_type), vertices.data(), GL_STATIC_DRAW);
 
     GLuint vertexIndexBufferId;
     glGenBuffers(1, &vertexIndexBufferId);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertexIndexBufferId);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(vertexIndices), vertexIndices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexIndices.size() * sizeof(decltype(vertexIndices)::value_type), vertexIndices.data(), GL_STATIC_DRAW);
 
     Shader vertexShader(GL_VERTEX_SHADER);
     vertexShader.loadFromFile("shaders/vert.glsl");
     Shader fragmentShader(GL_FRAGMENT_SHADER);
     fragmentShader.loadFromFile("shaders/frag.glsl");
-
-    Texture grassBlockTexture(GL_TEXTURE_2D);
-    grassBlockTexture.loadFromFile("textures/grass_block.png");
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     GLuint shaderProgramId = glCreateProgram();
     glAttachShader(shaderProgramId, vertexShader.id);
@@ -152,7 +181,7 @@ int main(int argc, char* argv[]) {
       glClear(GL_COLOR_BUFFER_BIT);
 
       glActiveTexture(GL_TEXTURE0);
-      grassBlockTexture.bind();
+      displayedBlock->texture->bind();
 
       glm::mat4 m = glm::rotate(glm::mat4(1.f), static_cast<float>(glfwGetTime()) * 2.f * 0.1f * glm::pi<float>(), glm::vec3(0.f, 1.f, 0.f));
       glm::mat4 v = glm::scale(glm::rotate(glm::mat4(1.f), glm::pi<float>() / 9.f, glm::vec3(1.f, 0.f, 0.f)), glm::vec3(0.6f));
@@ -162,7 +191,7 @@ int main(int argc, char* argv[]) {
       glUseProgram(shaderProgramId);
       glUniformMatrix4fv(mvpLocation, 1, GL_FALSE, glm::value_ptr(mvp));
       glUniform1i(colorMapLocation, 0);
-      glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+      glDrawElements(GL_TRIANGLES, vertexIndices.size(), GL_UNSIGNED_INT, 0);
 
       glfwSwapBuffers(window);
       glfwPollEvents();

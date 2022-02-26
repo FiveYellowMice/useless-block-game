@@ -10,6 +10,10 @@ Shader::Shader(GLenum type_) {
   id = glCreateShader(type);
 }
 
+Shader::~Shader() {
+  glDeleteShader(id);
+}
+
 void Shader::loadFromString(const char* source) {
   glShaderSource(id, 1, &source, NULL);
   glCompileShader(id);
