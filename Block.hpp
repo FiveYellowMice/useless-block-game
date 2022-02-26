@@ -6,6 +6,8 @@
 class Block {
 public:
   BlockType* block_type;
+
+  Block(BlockType* block_type_);
 };
 
 #endif

@@ -11,8 +11,11 @@
 #include "ApplicationException.hpp"
 #include "Shader.hpp"
 #include "Texture.hpp"
+#include "Block.hpp"
 #include "BlockType.hpp"
-#include "main.hpp"
+#include "BlocksMap.hpp"
+#include "BlocksMesh.hpp"
+#include "Vertex.hpp"
 #include "build_config.h"
 
 int main(int argc, char* argv[]) {
@@ -82,55 +85,9 @@ int main(int argc, char* argv[]) {
 
     // Construct block mesh
 
-    const BlockType* displayedBlock = blockTypes[1].get();
-
-    std::vector<Vertex> vertices = {
-      // +X
-      { 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 0.f, 0.f},
-      { 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 0.f, 0.f},
-      { 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 0.f, 0.f},
-      { 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 0.f, 0.f},
-      // -X
-      {-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 0.f, 0.f},
-      {-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 0.f, 0.f},
-      {-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 0.f, 0.f},
-      {-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 0.f, 0.f},
-      // +Y
-      {-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 0.f, 0.f},
-      { 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 0.f, 0.f},
-      {-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.f, 0.f},
-      { 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.f, 0.f},
-      // -Y
-      { 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 0.f, 0.f},
-      {-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 0.f, 0.f},
-      { 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.f, 0.f},
-      {-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.f, 0.f},
-      // +Z
-      {-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.f, 0.f},
-      { 0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.f, 0.f},
-      {-0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.f, 0.f},
-      { 0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.f, 0.f},
-      // -Z
-      { 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.f, 0.f},
-      {-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.f, 0.f},
-      { 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.f, 0.f},
-      {-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.f, 0.f},
-    };
-    for (size_t i = 0; i < displayedBlock->vertex_texture_coordinates.size(); i++) {
-      vertices[i].u = displayedBlock->vertex_texture_coordinates[i][0];
-      vertices[i].v = displayedBlock->vertex_texture_coordinates[i][1];
-    }
-
-    std::vector<GLuint> vertexIndices;
-    vertexIndices.reserve(vertices.size() / 4 * 6);
-    for (size_t i = 0; i < vertices.size() / 4; i++) {
-      vertexIndices.push_back(i * 4 + 0);
-      vertexIndices.push_back(i * 4 + 1);
-      vertexIndices.push_back(i * 4 + 2);
-      vertexIndices.push_back(i * 4 + 1);
-      vertexIndices.push_back(i * 4 + 3);
-      vertexIndices.push_back(i * 4 + 2);
-    }
+    BlocksMap blocksMap(16, 8, 16);
+    blocksMap.at(0, 0, 0) = std::optional<Block>(Block(blockTypes[0].get()));
+    auto blocksMesh = BlocksMesh::buildFromBlocksMap(blocksMap);
 
     GLuint vertexArrayId;
     glGenVertexArrays(1, &vertexArrayId);
@@ -139,12 +96,12 @@ int main(int argc, char* argv[]) {
     GLuint vertexBufferId;
     glGenBuffers(1, &vertexBufferId);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBufferId);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(decltype(vertices)::value_type), vertices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, blocksMesh.vertices.size() * sizeof(decltype(blocksMesh.vertices)::value_type), blocksMesh.vertices.data(), GL_STATIC_DRAW);
 
     GLuint vertexIndexBufferId;
     glGenBuffers(1, &vertexIndexBufferId);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertexIndexBufferId);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, vertexIndices.size() * sizeof(decltype(vertexIndices)::value_type), vertexIndices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, blocksMesh.vertexIndices.size() * sizeof(decltype(blocksMesh.vertexIndices)::value_type), blocksMesh.vertexIndices.data(), GL_STATIC_DRAW);
 
     Shader vertexShader(GL_VERTEX_SHADER);
     vertexShader.loadFromFile("shaders/vert.glsl");
@@ -181,7 +138,7 @@ int main(int argc, char* argv[]) {
       glClear(GL_COLOR_BUFFER_BIT);
 
       glActiveTexture(GL_TEXTURE0);
-      displayedBlock->texture->bind();
+      blockTypes[0]->texture->bind(); // Problem: cannot use different textures for differrent blocks in the blocks mesh, I should stitch all block textures together
 
       glm::mat4 m = glm::rotate(glm::mat4(1.f), static_cast<float>(glfwGetTime()) * 2.f * 0.1f * glm::pi<float>(), glm::vec3(0.f, 1.f, 0.f));
       glm::mat4 v = glm::scale(glm::rotate(glm::mat4(1.f), glm::pi<float>() / 9.f, glm::vec3(1.f, 0.f, 0.f)), glm::vec3(0.6f));
@@ -191,7 +148,7 @@ int main(int argc, char* argv[]) {
       glUseProgram(shaderProgramId);
       glUniformMatrix4fv(mvpLocation, 1, GL_FALSE, glm::value_ptr(mvp));
       glUniform1i(colorMapLocation, 0);
-      glDrawElements(GL_TRIANGLES, vertexIndices.size(), GL_UNSIGNED_INT, 0);
+      glDrawElements(GL_TRIANGLES, blocksMesh.vertexIndices.size(), GL_UNSIGNED_INT, 0);
 
       glfwSwapBuffers(window);
       glfwPollEvents();

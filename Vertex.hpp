@@ -1,5 +1,5 @@
-#ifndef _MAIN_HPP_
-#define _MAIN_HPP_
+#ifndef _VERTEX_HPP_
+#define _VERTEX_HPP_
 
 struct Vertex {
   float x, y, z;
