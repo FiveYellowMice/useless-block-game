@@ -11,6 +11,7 @@
 #include "ApplicationException.hpp"
 #include "Shader.hpp"
 #include "Texture.hpp"
+#include "StreamingTextures.hpp"
 #include "Block.hpp"
 #include "BlockType.hpp"
 #include "BlocksMap.hpp"
@@ -40,9 +41,9 @@ int main(int argc, char* argv[]) {
     GLenum glewErr = glewInit();
     if (glewErr != GLEW_OK) throw ApplicationException((const char*) glewGetErrorString(glewErr));
 
-//     if (!glewIsSupported("GL_ARB_texture_storage")) {
-//       throw ApplicationException("Necessary OpenGL extensions not supported");
-//     }
+    if (!glewIsSupported("GL_ARB_texture_storage")) {
+      throw ApplicationException("Necessary OpenGL extensions not supported");
+    }
 
     glfwSetFramebufferSizeCallback(window, [] (GLFWwindow* window, int width, int height) {
       glViewport(0, 0, width, height);
@@ -64,34 +65,45 @@ int main(int argc, char* argv[]) {
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
 
-    // Define block types
+    // Define block types, load block textures
+
+    StreamingTextures blockTextures(16, 16, std::vector<GLenum>{GL_RGB8}, [] (size_t i, GLuint textureId) {
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    });
 
     std::vector<std::unique_ptr<BlockType>> blockTypes;
-    blockTypes.push_back(std::make_unique<BlockType>("grass_block", std::array<std::array<float, 2>, 24>{{
-      {0.5f, 0.5f}, {1.0f, 0.5f}, {0.5f, 0.0f}, {1.0f, 0.0f}, // +X
-      {0.5f, 0.5f}, {1.0f, 0.5f}, {0.5f, 0.0f}, {1.0f, 0.0f}, // -X
-      {0.0f, 0.5f}, {0.5f, 0.5f}, {0.0f, 0.0f}, {0.5f, 0.0f}, // +Y
-      {0.0f, 1.0f}, {0.5f, 1.0f}, {0.0f, 0.5f}, {0.5f, 0.5f}, // -Y
-      {0.5f, 0.5f}, {1.0f, 0.5f}, {0.5f, 0.0f}, {1.0f, 0.0f}, // +Z
-      {0.5f, 0.5f}, {1.0f, 0.5f}, {0.5f, 0.0f}, {1.0f, 0.0f}, // -Z
-    }}));
-    blockTypes.push_back(std::make_unique<BlockType>("stone", std::array<std::array<float, 2>, 24>{{
-      {0.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f},
-      {0.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f},
-      {0.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f},
-      {0.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f},
-      {0.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f},
-      {0.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f},
-    }}));
+
+    auto grassBlockTextureTop = blockTextures.allocateFromFiles(std::vector<std::string>{APP_RESOURCE_PATH "/textures/grass_block/top.png"});
+    auto grassBlockTextureSide = blockTextures.allocateFromFiles(std::vector<std::string>{APP_RESOURCE_PATH "/textures/grass_block/side.png"});
+    auto grassBlockTextureBottom = blockTextures.allocateFromFiles(std::vector<std::string>{APP_RESOURCE_PATH "/textures/grass_block/bottom.png"});
+    blockTypes.push_back(std::make_unique<BlockType>("grass_block", std::array<std::shared_ptr<StreamingTexturesPart>, 6>{
+      grassBlockTextureSide,
+      grassBlockTextureSide,
+      grassBlockTextureTop,
+      grassBlockTextureBottom,
+      grassBlockTextureSide,
+      grassBlockTextureSide,
+    }));
+
+    auto stoneTexture = blockTextures.allocateFromFiles(std::vector<std::string>{APP_RESOURCE_PATH "/textures/stone/all.png"});
+    blockTypes.push_back(std::make_unique<BlockType>("stone", std::array<std::shared_ptr<StreamingTexturesPart>, 6>{
+      stoneTexture,
+      stoneTexture,
+      stoneTexture,
+      stoneTexture,
+      stoneTexture,
+      stoneTexture,
+    }));
 
     // Construct block mesh
 
     BlocksMap blocksMap(glm::ivec3(-7, 0, -7), glm::ivec3(16, 8, 16));
     blocksMap[glm::ivec3(0, 1, 0)] = std::optional<Block>(Block(blockTypes[0].get()));
-    blocksMap[glm::ivec3(0, 0, 0)] = std::optional<Block>(Block(blockTypes[0].get()));
-    blocksMap[glm::ivec3(1, 0, 0)] = std::optional<Block>(Block(blockTypes[0].get()));
+    blocksMap[glm::ivec3(0, 0, 0)] = std::optional<Block>(Block(blockTypes[1].get()));
+    blocksMap[glm::ivec3(1, 0, 0)] = std::optional<Block>(Block(blockTypes[1].get()));
     blocksMap[glm::ivec3(0, 0, 1)] = std::optional<Block>(Block(blockTypes[0].get()));
-    blocksMap[glm::ivec3(-1, 0, 0)] = std::optional<Block>(Block(blockTypes[0].get()));
+    blocksMap[glm::ivec3(-1, 0, 0)] = std::optional<Block>(Block(blockTypes[1].get()));
     blocksMap[glm::ivec3(0, 1, -1)] = std::optional<Block>(Block(blockTypes[0].get()));
     auto blocksMesh = BlocksMesh::buildFromBlocksMap(blocksMap);
 
@@ -143,8 +155,7 @@ int main(int argc, char* argv[]) {
 
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-      glActiveTexture(GL_TEXTURE0);
-      blockTypes[0]->texture->bind(); // Problem: cannot use different textures for differrent blocks in the blocks mesh, I should stitch all block textures together
+      blockTextures.bind();
 
       glm::mat4 m = glm::rotate(glm::mat4(1.f), static_cast<float>(glfwGetTime()) * 2.f * 0.1f * glm::pi<float>(), glm::vec3(0.f, 1.f, 0.f));
       glm::mat4 v = glm::rotate(glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, -10.f)), glm::pi<float>() / 9.f, glm::vec3(1.f, 0.f, 0.f));

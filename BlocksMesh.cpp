@@ -1,4 +1,4 @@
-#include <tuple>
+#include <algorithm>
 #include "Block.hpp"
 #include "BlocksMesh.hpp"
 
@@ -10,90 +10,46 @@ BlocksMesh BlocksMesh::buildFromBlocksMap(const BlocksMap& blocksMap) {
     std::optional<Block> block = blocksMap.storage[i];
     if (!block) continue;
 
-    // The faces and their vertices a block should have
-    const std::array<std::tuple<glm::ivec3, std::array<Vertex, 4>>, 6> blockFacesAndVertices {
-      // +X
-      std::tuple<glm::ivec3, std::array<Vertex, 4>>{
-        glm::ivec3(1, 0, 0), std::array<Vertex, 4>{{
-          { 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 0.f, 0.f},
-          { 0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 0.f, 0.f},
-          { 0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 0.f, 0.f},
-          { 0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f, 0.f, 0.f},
-        }}
-      },
-      // -X
-      std::tuple<glm::ivec3, std::array<Vertex, 4>>{
-        glm::ivec3(-1, 0, 0), std::array<Vertex, 4>{{
-          {-0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 0.f, 0.f},
-          {-0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 0.f, 0.f},
-          {-0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f, 0.f, 0.f},
-          {-0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f, 0.f, 0.f},
-        }}
-      },
-      // +Y
-      std::tuple<glm::ivec3, std::array<Vertex, 4>>{
-        glm::ivec3(0, 1, 0), std::array<Vertex, 4>{{
-          {-0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 0.f, 0.f},
-          { 0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f, 0.f, 0.f},
-          {-0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.f, 0.f},
-          { 0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f, 0.f, 0.f},
-        }}
-      },
-      // -Y
-      std::tuple<glm::ivec3, std::array<Vertex, 4>>{
-        glm::ivec3(0, -1, 0), std::array<Vertex, 4>{{
-          { 0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 0.f, 0.f},
-          {-0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f, 0.f, 0.f},
-          { 0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.f, 0.f},
-          {-0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f, 0.f, 0.f},
-        }}
-      },
-      // +Z
-      std::tuple<glm::ivec3, std::array<Vertex, 4>>{
-        glm::ivec3(0, 0, 1), std::array<Vertex, 4>{{
-          {-0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.f, 0.f},
-          { 0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.f, 0.f},
-          {-0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.f, 0.f},
-          { 0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f, 0.f, 0.f},
-        }}
-      },
-      // -Z
-      std::tuple<glm::ivec3, std::array<Vertex, 4>>{
-        glm::ivec3(0, 0, -1), std::array<Vertex, 4>{{
-          { 0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.f, 0.f},
-          {-0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.f, 0.f},
-          { 0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.f, 0.f},
-          {-0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f, 0.f, 0.f},
-        }}
-      },
-    };
-
     // Add the vertices of exposed faces to the mesh
-    for (size_t j = 0; j < blockFacesAndVertices.size(); j++) {
-      auto [faceDirection, faceVertices] = blockFacesAndVertices[j];
-
-      // Discard faces with adjacent block
-      std::optional<Block> adjacentBlock = blocksMap.get(position + faceDirection);
-      if (adjacentBlock) continue;
-
-      for (size_t k = 0; k < 4; k++) {
-        // Move vertex position with respect to block position
-        faceVertices[k].x += position.x;
-        faceVertices[k].y += position.y;
-        faceVertices[k].z += position.z;
-        // Set texture coordinates
-        faceVertices[k].u = block->block_type->vertex_texture_coordinates[j * 4 + k][0];
-        faceVertices[k].v = block->block_type->vertex_texture_coordinates[j * 4 + k][1];
+    for (const BlockFaceDefinition& face : block->blockType->faces()) {
+      // Determine whether this face is at or beyond the boundary of the block, and in which direction
+      std::optional<glm::ivec3> faceDirection;
+      if (std::all_of(face.vertices().begin(), face.vertices().end(), [] (const Vertex& vertex) { return vertex.x >= 0.5f; })) {
+        faceDirection.emplace(glm::ivec3(1, 0, 0));
+      } else if (std::all_of(face.vertices().begin(), face.vertices().end(), [] (const Vertex& vertex) { return vertex.x <= -0.5f; })) {
+        faceDirection.emplace(glm::ivec3(-1, 0, 0));
+      } else if (std::all_of(face.vertices().begin(), face.vertices().end(), [] (const Vertex& vertex) { return vertex.y >= 0.5f; })) {
+        faceDirection.emplace(glm::ivec3(0, 1, 0));
+      } else if (std::all_of(face.vertices().begin(), face.vertices().end(), [] (const Vertex& vertex) { return vertex.y <= -0.5f; })) {
+        faceDirection.emplace(glm::ivec3(0, -1, 0));
+      } else if (std::all_of(face.vertices().begin(), face.vertices().end(), [] (const Vertex& vertex) { return vertex.z >= 0.5f; })) {
+        faceDirection.emplace(glm::ivec3(0, 0, 1));
+      } else if (std::all_of(face.vertices().begin(), face.vertices().end(), [] (const Vertex& vertex) { return vertex.z <= -0.5f; })) {
+        faceDirection.emplace(glm::ivec3(0, 0, -1));
+      }
+      if (faceDirection) {
+        std::optional<Block> adjacentBlock = blocksMap.get(position + *faceDirection);
+        // Discard faces with adjacent block
+        if (adjacentBlock) continue;
       }
 
-      // Add vertices and vertex indices to mesh
-      blocksMesh.vertices.insert(blocksMesh.vertices.end(), faceVertices.begin(), faceVertices.end());
-      blocksMesh.vertexIndices.push_back(blocksMesh.vertices.size() - 4 + 0);
-      blocksMesh.vertexIndices.push_back(blocksMesh.vertices.size() - 4 + 1);
-      blocksMesh.vertexIndices.push_back(blocksMesh.vertices.size() - 4 + 2);
-      blocksMesh.vertexIndices.push_back(blocksMesh.vertices.size() - 4 + 1);
-      blocksMesh.vertexIndices.push_back(blocksMesh.vertices.size() - 4 + 3);
-      blocksMesh.vertexIndices.push_back(blocksMesh.vertices.size() - 4 + 2);
+      // Add vertices to mesh
+      blocksMesh.vertices.reserve(blocksMesh.vertices.size() + face.vertices().size());
+      for (const Vertex& definedVertex : face.vertices()) {
+        Vertex vertex = definedVertex;
+        // Move vertex position with respect to block position
+        vertex.x += position.x;
+        vertex.y += position.y;
+        vertex.z += position.z;
+
+        blocksMesh.vertices.push_back(vertex);
+      }
+
+      // Add vertex indices to mesh
+      blocksMesh.vertexIndices.reserve(face.vertexIndices().size());
+      for (GLuint definedVertexIndex : face.vertexIndices()) {
+        blocksMesh.vertexIndices.push_back(blocksMesh.vertices.size() - face.vertices().size() + definedVertexIndex);
+      }
     }
   }
 

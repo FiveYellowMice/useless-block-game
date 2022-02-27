@@ -5,9 +5,9 @@
 // A block on the map
 class Block {
 public:
-  BlockType* block_type;
+  BlockType* blockType;
 
-  Block(BlockType* block_type_);
+  Block(BlockType* blockType_);
 };
 
 #endif

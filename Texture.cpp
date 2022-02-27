@@ -71,7 +71,7 @@ void Texture::loadFromFile(const std::string& filename) {
   png_byte* data = new png_byte[rowbytes * height];
   png_bytep* row_pointers = new png_bytep[height];
   for (size_t i = 0; i < height; i++) {
-    row_pointers[i] = &data[i * rowbytes];
+    row_pointers[i] = &data[(height - i - 1) * rowbytes];
   }
 
   // Read image

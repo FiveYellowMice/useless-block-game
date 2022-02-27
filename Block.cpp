@@ -1,5 +1,5 @@
 #include "Block.hpp"
 
-Block::Block(BlockType* block_type_) {
-  block_type = block_type_;
+Block::Block(BlockType* blockType_) {
+  blockType = blockType_;
 }
