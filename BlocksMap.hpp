@@ -2,22 +2,24 @@
 #define _BLOCKS_MAP_HPP_
 #include <vector>
 #include <optional>
+#include <algorithm>
+#include <glm/glm.hpp>
 #include "Block.hpp"
 
 class BlocksMap {
 public:
-  size_t x_size;
-  size_t y_size;
-  size_t z_size;
+  glm::ivec3 size;
   std::vector<std::optional<Block>> storage;
 
-  BlocksMap(size_t x_size_, size_t y_size_, size_t z_size_);
+  BlocksMap(glm::ivec3 size_);
 
-  std::optional<Block>& at(size_t x, size_t y, size_t z);
-  const std::optional<Block>& at(size_t x, size_t y, size_t z) const;
+  std::optional<Block>& operator[](glm::ivec3 position);
+  const std::optional<Block>& operator[](glm::ivec3 position) const;
 
-private:
-  size_t calculateStorageLocation(size_t x, size_t y, size_t z) const;
+  const std::optional<Block> get(glm::ivec3 position) const;
+
+  std::optional<size_t> calculateStorageLocation(glm::ivec3 position) const;
+  glm::ivec3 calculatePosition(size_t storageLocation) const;
 };
 
 #endif

@@ -1,20 +1,54 @@
+#include <stdexcept>
 #include "BlocksMap.hpp"
 
-BlocksMap::BlocksMap(size_t x_size_, size_t y_size_, size_t z_size_) {
-  x_size = x_size_;
-  y_size = y_size_;
-  z_size = z_size_;
-  storage.resize(x_size * y_size * z_size);
+BlocksMap::BlocksMap(glm::ivec3 size_) {
+  size = size_;
+  storage.resize(size.x * size.y * size.z);
 }
 
-std::optional<Block>& BlocksMap::at(size_t x, size_t y, size_t z) {
-  return storage[calculateStorageLocation(x, y, z)];
+std::optional<Block>& BlocksMap::operator[](glm::ivec3 position) {
+  std::optional<size_t> storageLocation = calculateStorageLocation(position);
+  if (storageLocation) {
+    return storage[*storageLocation];
+  } else {
+    throw std::out_of_range("position is outside of the BlocksMap");
+  }
 }
 
-const std::optional<Block>& BlocksMap::at(size_t x, size_t y, size_t z) const {
-  return storage[calculateStorageLocation(x, y, z)];
+const std::optional<Block>& BlocksMap::operator[](glm::ivec3 position) const {
+  std::optional<size_t> storageLocation = calculateStorageLocation(position);
+  if (storageLocation) {
+    return storage[*storageLocation];
+  } else {
+    throw std::out_of_range("position is outside of the BlocksMap");
+  }
 }
 
-size_t BlocksMap::calculateStorageLocation(size_t x, size_t y, size_t z) const {
-  return y * x_size * z_size + z * x_size + x;
+const std::optional<Block> BlocksMap::get(glm::ivec3 position) const {
+  std::optional<size_t> storageLocation = calculateStorageLocation(position);
+  if (storageLocation) {
+    return storage[*storageLocation];
+  } else {
+    return {};
+  }
+}
+
+std::optional<size_t> BlocksMap::calculateStorageLocation(glm::ivec3 position) const {
+  if (
+    position.x >= 0 && position.x < size.x &&
+    position.y >= 0 && position.y < size.y &&
+    position.z >= 0 && position.z < size.z
+  ) {
+    return position.y * size.x * size.z + position.z * size.x + position.x;
+  } else {
+    return {};
+  }
+}
+
+glm::ivec3 BlocksMap::calculatePosition(size_t storageLocation) const {
+  glm::ivec3 position;
+  position.y = storageLocation / (size.x * size.z);
+  position.z = (storageLocation % (size.x * size.z)) / size.x;
+  position.x = storageLocation % size.x;
+  return position;
 }

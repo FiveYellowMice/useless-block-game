@@ -62,6 +62,7 @@ int main(int argc, char* argv[]) {
 
     glfwSwapInterval(1);
     glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
 
     // Define block types
 
@@ -85,8 +86,11 @@ int main(int argc, char* argv[]) {
 
     // Construct block mesh
 
-    BlocksMap blocksMap(16, 8, 16);
-    blocksMap.at(0, 0, 0) = std::optional<Block>(Block(blockTypes[0].get()));
+    BlocksMap blocksMap(glm::ivec3(16, 8, 16));
+    blocksMap[glm::ivec3(0, 1, 0)] = std::optional<Block>(Block(blockTypes[0].get()));
+    blocksMap[glm::ivec3(0, 0, 0)] = std::optional<Block>(Block(blockTypes[0].get()));
+    blocksMap[glm::ivec3(1, 0, 0)] = std::optional<Block>(Block(blockTypes[0].get()));
+    blocksMap[glm::ivec3(0, 0, 1)] = std::optional<Block>(Block(blockTypes[0].get()));
     auto blocksMesh = BlocksMesh::buildFromBlocksMap(blocksMap);
 
     GLuint vertexArrayId;
@@ -135,14 +139,14 @@ int main(int argc, char* argv[]) {
       glfwGetFramebufferSize(window, &width, &height);
       ratio = width / (float) height;
 
-      glClear(GL_COLOR_BUFFER_BIT);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
       glActiveTexture(GL_TEXTURE0);
       blockTypes[0]->texture->bind(); // Problem: cannot use different textures for differrent blocks in the blocks mesh, I should stitch all block textures together
 
       glm::mat4 m = glm::rotate(glm::mat4(1.f), static_cast<float>(glfwGetTime()) * 2.f * 0.1f * glm::pi<float>(), glm::vec3(0.f, 1.f, 0.f));
-      glm::mat4 v = glm::scale(glm::rotate(glm::mat4(1.f), glm::pi<float>() / 9.f, glm::vec3(1.f, 0.f, 0.f)), glm::vec3(0.6f));
-      glm::mat4 p = glm::ortho(-ratio, ratio, -1.f, 1.f, 1.f, -1.f);
+      glm::mat4 v = glm::rotate(glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, -10.f)), glm::pi<float>() / 9.f, glm::vec3(1.f, 0.f, 0.f));
+      glm::mat4 p = glm::perspective(glm::pi<float>() / 4.f, ratio, 0.1f, 100.f);
       glm::mat4 mvp = p * v * m;
 
       glUseProgram(shaderProgramId);
