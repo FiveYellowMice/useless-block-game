@@ -1,7 +1,8 @@
 #include <stdexcept>
 #include "BlocksMap.hpp"
 
-BlocksMap::BlocksMap(glm::ivec3 size_) {
+BlocksMap::BlocksMap(glm::ivec3 basePosition_, glm::ivec3 size_) {
+  basePosition = basePosition_;
   size = size_;
   storage.resize(size.x * size.y * size.z);
 }
@@ -34,21 +35,22 @@ const std::optional<Block> BlocksMap::get(glm::ivec3 position) const {
 }
 
 std::optional<size_t> BlocksMap::calculateStorageLocation(glm::ivec3 position) const {
+  glm::ivec3 internalPosition = position - basePosition;
   if (
-    position.x >= 0 && position.x < size.x &&
-    position.y >= 0 && position.y < size.y &&
-    position.z >= 0 && position.z < size.z
+    internalPosition.x >= 0 && internalPosition.x < size.x &&
+    internalPosition.y >= 0 && internalPosition.y < size.y &&
+    internalPosition.z >= 0 && internalPosition.z < size.z
   ) {
-    return position.y * size.x * size.z + position.z * size.x + position.x;
+    return internalPosition.y * size.x * size.z + internalPosition.z * size.x + internalPosition.x;
   } else {
     return {};
   }
 }
 
 glm::ivec3 BlocksMap::calculatePosition(size_t storageLocation) const {
-  glm::ivec3 position;
-  position.y = storageLocation / (size.x * size.z);
-  position.z = (storageLocation % (size.x * size.z)) / size.x;
-  position.x = storageLocation % size.x;
-  return position;
+  glm::ivec3 internalPosition;
+  internalPosition.y = storageLocation / (size.x * size.z);
+  internalPosition.z = (storageLocation % (size.x * size.z)) / size.x;
+  internalPosition.x = storageLocation % size.x;
+  return internalPosition + basePosition;
 }

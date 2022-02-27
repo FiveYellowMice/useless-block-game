@@ -8,10 +8,11 @@
 
 class BlocksMap {
 public:
+  glm::ivec3 basePosition; // What the (0, 0, 0)th element in storage mean in world space
   glm::ivec3 size;
   std::vector<std::optional<Block>> storage;
 
-  BlocksMap(glm::ivec3 size_);
+  BlocksMap(glm::ivec3 basePosition_, glm::ivec3 size_);
 
   std::optional<Block>& operator[](glm::ivec3 position);
   const std::optional<Block>& operator[](glm::ivec3 position) const;
