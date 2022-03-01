@@ -4,10 +4,13 @@
 
 // A block on the map
 class Block {
-public:
-  BlockType* blockType;
+private:
+  BlockType& _blockType;
 
-  Block(BlockType* blockType_);
+public:
+  Block(BlockType& blockType_) : _blockType(blockType_) {}
+
+  const BlockType& blockType() const { return _blockType; }
 };
 
 #endif

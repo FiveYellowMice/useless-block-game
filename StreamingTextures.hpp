@@ -45,28 +45,34 @@ public:
   };
 };
 
-// Holds a reference to a cell in the StreamingTextures grid, removes itself from the manager when destroyed
+// Represents to a cell in the StreamingTextures grid
 class StreamingTexturesPart {
 private:
-  StreamingTextures* _manager;
+  StreamingTextures& _manager;
   size_t _xLocation;
   size_t _yLocation;
 
-  StreamingTexturesPart(StreamingTextures* manager_, size_t xLocation_, size_t yLocation_);
+  // Do not allow an instance to be created freely
+  StreamingTexturesPart(StreamingTextures& manager_, size_t xLocation_, size_t yLocation_) : _manager(manager_), _xLocation(xLocation_), _yLocation(yLocation_) {}
 
 public:
+  // Do not allow an instance to be copied or moved
   StreamingTexturesPart(const StreamingTexturesPart&) = delete;
   StreamingTexturesPart(StreamingTexturesPart&&) = delete;
-  ~StreamingTexturesPart();
 
-  StreamingTextures* manager() const { return _manager; }
+  ~StreamingTexturesPart() {
+    // Remove itself from the manager
+    _manager._registry[_yLocation * _manager._cellCountPerSide + _xLocation] = false;
+  }
+
+  StreamingTextures& manager() const { return _manager; }
   size_t xLocation() const { return _xLocation; }
   size_t yLocation() const { return _yLocation; }
-  size_t sideLength() const { return _manager->_cellSideLength; }
+  size_t sideLength() const { return _manager._cellSideLength; }
   size_t xOffset() const { return _xLocation * sideLength(); }
   size_t yOffset() const { return _yLocation * sideLength(); }
-  float scaleU(float u) { return (u + _xLocation) / _manager->_cellCountPerSide; }
-  float scaleV(float v) { return (v + _yLocation) / _manager->_cellCountPerSide; }
+  float scaleU(float u) { return (u + _xLocation) / _manager._cellCountPerSide; }
+  float scaleV(float v) { return (v + _yLocation) / _manager._cellCountPerSide; }
 
   friend class StreamingTextures;
 };

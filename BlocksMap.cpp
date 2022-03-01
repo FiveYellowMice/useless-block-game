@@ -25,13 +25,15 @@ const std::optional<Block>& BlocksMap::operator[](glm::ivec3 position) const {
   }
 }
 
-const std::optional<Block> BlocksMap::get(glm::ivec3 position) const {
+const Block* BlocksMap::get(glm::ivec3 position) const {
   std::optional<size_t> storageLocation = calculateStorageLocation(position);
   if (storageLocation) {
-    return storage[*storageLocation];
-  } else {
-    return {};
+    const std::optional<Block>& optionalBlock = storage[*storageLocation];
+    if (optionalBlock) {
+      return &*optionalBlock;
+    }
   }
+  return nullptr;
 }
 
 std::optional<size_t> BlocksMap::calculateStorageLocation(glm::ivec3 position) const {

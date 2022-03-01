@@ -7,11 +7,11 @@ BlocksMesh BlocksMesh::buildFromBlocksMap(const BlocksMap& blocksMap) {
 
   for (size_t i = 0; i < blocksMap.storage.size(); i++) {
     glm::ivec3 position = blocksMap.calculatePosition(i);
-    std::optional<Block> block = blocksMap.storage[i];
+    const std::optional<Block>& block = blocksMap.storage[i];
     if (!block) continue;
 
     // Add the vertices of exposed faces to the mesh
-    for (const BlockFaceDefinition& face : block->blockType->faces()) {
+    for (const BlockFaceDefinition& face : block->blockType().faces()) {
       // Determine whether this face is at or beyond the boundary of the block, and in which direction
       std::optional<glm::ivec3> faceDirection;
       if (std::all_of(face.vertices().begin(), face.vertices().end(), [] (const Vertex& vertex) { return vertex.x >= 0.5f; })) {
@@ -28,7 +28,7 @@ BlocksMesh BlocksMesh::buildFromBlocksMap(const BlocksMap& blocksMap) {
         faceDirection.emplace(glm::ivec3(0, 0, -1));
       }
       if (faceDirection) {
-        std::optional<Block> adjacentBlock = blocksMap.get(position + *faceDirection);
+        const Block* adjacentBlock = blocksMap.get(position + *faceDirection);
         // Discard faces with adjacent block
         if (adjacentBlock) continue;
       }

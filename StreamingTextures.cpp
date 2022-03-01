@@ -64,7 +64,7 @@ std::shared_ptr<StreamingTexturesPart> StreamingTextures::allocate(const std::ve
     glTexSubImage2D(GL_TEXTURE_2D, 0, xOffset, yOffset, _cellSideLength, _cellSideLength, sizedInternalFormatToBaseInternalFormat(_textureFormats[i]), GL_UNSIGNED_BYTE, data[i].data());
   }
 
-  return std::shared_ptr<StreamingTexturesPart>(new StreamingTexturesPart(this, xLocation, yLocation));
+  return std::shared_ptr<StreamingTexturesPart>(new StreamingTexturesPart(*this, xLocation, yLocation));
 }
 
 std::shared_ptr<StreamingTexturesPart> StreamingTextures::allocateFromFiles(const std::vector<std::string>& filenames) {
@@ -111,15 +111,4 @@ size_t StreamingTextures::sizedInternalFormatToPixelSize(GLenum sizedInternalFor
     default:
       throw std::invalid_argument("unsupported texture format");
   }
-}
-
-StreamingTexturesPart::StreamingTexturesPart(StreamingTextures* manager_, size_t xLocation_, size_t yLocation_) {
-  _manager = manager_;
-  _xLocation = xLocation_;
-  _yLocation = yLocation_;
-  // No need to modify existing registry value, it should already be done by the manager
-}
-
-StreamingTexturesPart::~StreamingTexturesPart() {
-  _manager->_registry[_yLocation * _manager->_cellCountPerSide + _xLocation] = false;
 }

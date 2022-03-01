@@ -98,12 +98,12 @@ int main(int argc, char* argv[]) {
     // Construct block mesh
 
     BlocksMap blocksMap(glm::ivec3(-7, 0, -7), glm::ivec3(16, 8, 16));
-    blocksMap[glm::ivec3(0, 1, 0)] = std::optional<Block>(Block(blockTypes[0].get()));
-    blocksMap[glm::ivec3(0, 0, 0)] = std::optional<Block>(Block(blockTypes[1].get()));
-    blocksMap[glm::ivec3(1, 0, 0)] = std::optional<Block>(Block(blockTypes[1].get()));
-    blocksMap[glm::ivec3(0, 0, 1)] = std::optional<Block>(Block(blockTypes[0].get()));
-    blocksMap[glm::ivec3(-1, 0, 0)] = std::optional<Block>(Block(blockTypes[1].get()));
-    blocksMap[glm::ivec3(0, 1, -1)] = std::optional<Block>(Block(blockTypes[0].get()));
+    blocksMap[glm::ivec3(0, 1, 0)].emplace(Block(*blockTypes[0]));
+    blocksMap[glm::ivec3(0, 0, 0)].emplace(Block(*blockTypes[1]));
+    blocksMap[glm::ivec3(1, 0, 0)].emplace(Block(*blockTypes[1]));
+    blocksMap[glm::ivec3(0, 0, 1)].emplace(Block(*blockTypes[0]));
+    blocksMap[glm::ivec3(-1, 0, 0)].emplace(Block(*blockTypes[1]));
+    blocksMap[glm::ivec3(0, 1, -1)].emplace(Block(*blockTypes[0]));
     auto blocksMesh = BlocksMesh::buildFromBlocksMap(blocksMap);
 
     GLuint vertexArrayId;
