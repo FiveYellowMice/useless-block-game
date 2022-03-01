@@ -10,7 +10,6 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "ApplicationException.hpp"
 #include "Shader.hpp"
-#include "Texture.hpp"
 #include "StreamingTextures.hpp"
 #include "Block.hpp"
 #include "BlockType.hpp"

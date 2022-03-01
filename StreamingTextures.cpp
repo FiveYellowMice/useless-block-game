@@ -27,7 +27,6 @@ StreamingTextures::StreamingTextures(size_t cellSideLength_, size_t cellCountPer
 
 StreamingTextures::~StreamingTextures() {
   glDeleteTextures(_textureIds.size(), _textureIds.data());
-  // no need to drop vector elements, since the whole object going to be dropped now
 }
 
 void StreamingTextures::bind() {
