@@ -29,8 +29,8 @@ BlocksMesh BlocksMesh::buildFromBlocksMap(const BlocksMap& blocksMap) {
       }
       if (faceDirection) {
         const Block* adjacentBlock = blocksMap.get(position + *faceDirection);
-        // Discard faces with adjacent block
-        if (adjacentBlock) continue;
+        // Discard faces with non-transparent adjacent block
+        if (adjacentBlock && !adjacentBlock->blockType().attributes().transparent) continue;
       }
 
       // Add vertices to mesh

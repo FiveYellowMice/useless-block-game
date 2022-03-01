@@ -21,7 +21,7 @@ void load_png(const char* filename, GLenum expected_format, size_t expected_widt
       break;
     case GL_RGBA8:
       expected_color_type = PNG_COLOR_TYPE_RGBA;
-      expected_pixel_bytes - 4;
+      expected_pixel_bytes = 4;
       break;
     default:
       throw std::invalid_argument("unsupported texture format");

@@ -13,16 +13,18 @@ BlockFaceDefinition::BlockFaceDefinition(std::vector<Vertex>&& vertices_, std::v
   }
 }
 
-BlockType::BlockType(std::string&& blockId_, std::vector<BlockFaceDefinition>&& faces_) {
+BlockType::BlockType(std::string&& blockId_, BlockTypeAttributes&& attributes_, std::vector<BlockFaceDefinition>&& faces_) {
   _blockId = blockId_;
+  _attributes = attributes_;
   _faces = faces_;
 }
 
-BlockType::BlockType(std::string&& blockId_, std::array<std::shared_ptr<StreamingTexturesPart>, 6>&& faceTextures) {
+BlockType::BlockType(std::string&& blockId_, BlockTypeAttributes&& attributes_, std::array<std::shared_ptr<StreamingTexturesPart>, 6>&& faceTextures) {
   // faceTextures represent the 6 faces of a full block, order:
   // X+, X-, Y+, Y-, Z+, Z-
 
   _blockId = blockId_;
+  _attributes = attributes_;
   _faces = std::vector<BlockFaceDefinition>();
   _faces.reserve(6);
 

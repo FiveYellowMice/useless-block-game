@@ -23,18 +23,24 @@ public:
   std::shared_ptr<StreamingTexturesPart> texturePartPtr() const { return _texturePartPtr; }
 };
 
+struct BlockTypeAttributes {
+  bool transparent; // there are transparent pixels in the texture
+};
+
 // A type of block that could exist in the game
 class BlockType {
 private:
   std::string _blockId;
+  BlockTypeAttributes _attributes;
   std::vector<BlockFaceDefinition> _faces;
 
 public:
-  BlockType(std::string&& blockId_, std::vector<BlockFaceDefinition>&& faces_);
+  BlockType(std::string&& blockId_, BlockTypeAttributes&& attributes_, std::vector<BlockFaceDefinition>&& faces_);
   // Convenience function of defining a 6-faced full block
-  BlockType(std::string&& blockId_, std::array<std::shared_ptr<StreamingTexturesPart>, 6>&& faceTextures);
+  BlockType(std::string&& blockId_, BlockTypeAttributes&& attributes_, std::array<std::shared_ptr<StreamingTexturesPart>, 6>&& faceTextures);
 
   const std::string& blockId() const { return _blockId; }
+  const BlockTypeAttributes& attributes() const { return _attributes; }
   const std::vector<BlockFaceDefinition>& faces() const { return _faces; };
 };
 

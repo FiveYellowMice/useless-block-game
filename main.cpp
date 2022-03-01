@@ -66,44 +66,83 @@ int main(int argc, char* argv[]) {
 
     // Define block types, load block textures
 
-    StreamingTextures blockTextures(16, 16, std::vector<GLenum>{GL_RGB8}, [] (size_t i, GLuint textureId) {
+    StreamingTextures blockTextures(16, 16, std::vector<GLenum>{GL_RGBA8}, [] (size_t i, GLuint textureId) {
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     });
 
     std::vector<std::unique_ptr<BlockType>> blockTypes;
 
-    auto grassBlockTextureTop = blockTextures.allocateFromFiles(std::vector<std::string>{APP_RESOURCE_PATH "/textures/grass_block/top.png"});
-    auto grassBlockTextureSide = blockTextures.allocateFromFiles(std::vector<std::string>{APP_RESOURCE_PATH "/textures/grass_block/side.png"});
-    auto grassBlockTextureBottom = blockTextures.allocateFromFiles(std::vector<std::string>{APP_RESOURCE_PATH "/textures/grass_block/bottom.png"});
-    blockTypes.push_back(std::make_unique<BlockType>("grass_block", std::array<std::shared_ptr<StreamingTexturesPart>, 6>{
-      grassBlockTextureSide,
-      grassBlockTextureSide,
-      grassBlockTextureTop,
-      grassBlockTextureBottom,
-      grassBlockTextureSide,
-      grassBlockTextureSide,
-    }));
+    {
+      auto grassBlockTextureTop = blockTextures.allocateFromFiles(std::vector<std::string>{APP_RESOURCE_PATH "/textures/grass_block/top.png"});
+      auto grassBlockTextureSide = blockTextures.allocateFromFiles(std::vector<std::string>{APP_RESOURCE_PATH "/textures/grass_block/side.png"});
+      auto grassBlockTextureBottom = blockTextures.allocateFromFiles(std::vector<std::string>{APP_RESOURCE_PATH "/textures/grass_block/bottom.png"});
+      blockTypes.push_back(std::make_unique<BlockType>("grass_block", BlockTypeAttributes{
+        .transparent = false,
+      }, std::array<std::shared_ptr<StreamingTexturesPart>, 6>{
+        grassBlockTextureSide,
+        grassBlockTextureSide,
+        grassBlockTextureTop,
+        grassBlockTextureBottom,
+        grassBlockTextureSide,
+        grassBlockTextureSide,
+      }));
 
-    auto stoneTexture = blockTextures.allocateFromFiles(std::vector<std::string>{APP_RESOURCE_PATH "/textures/stone/all.png"});
-    blockTypes.push_back(std::make_unique<BlockType>("stone", std::array<std::shared_ptr<StreamingTexturesPart>, 6>{
-      stoneTexture,
-      stoneTexture,
-      stoneTexture,
-      stoneTexture,
-      stoneTexture,
-      stoneTexture,
-    }));
+      auto stoneTexture = blockTextures.allocateFromFiles(std::vector<std::string>{APP_RESOURCE_PATH "/textures/stone/all.png"});
+      blockTypes.push_back(std::make_unique<BlockType>("stone", BlockTypeAttributes{
+        .transparent = false,
+      }, std::array<std::shared_ptr<StreamingTexturesPart>, 6>{
+        stoneTexture,
+        stoneTexture,
+        stoneTexture,
+        stoneTexture,
+        stoneTexture,
+        stoneTexture,
+      }));
+
+      auto treeTrunkCrossTexture = blockTextures.allocateFromFiles(std::vector<std::string>{APP_RESOURCE_PATH "/textures/tree_trunk/cross.png"});
+      auto treeTrunkSideTexture = blockTextures.allocateFromFiles(std::vector<std::string>{APP_RESOURCE_PATH "/textures/tree_trunk/side.png"});
+      blockTypes.push_back(std::make_unique<BlockType>("tree_trunk", BlockTypeAttributes{
+        .transparent = false,
+      }, std::array<std::shared_ptr<StreamingTexturesPart>, 6>{
+        treeTrunkSideTexture,
+        treeTrunkSideTexture,
+        treeTrunkCrossTexture,
+        treeTrunkCrossTexture,
+        treeTrunkSideTexture,
+        treeTrunkSideTexture,
+      }));
+
+      auto treeLeavesTexture = blockTextures.allocateFromFiles(std::vector<std::string>{APP_RESOURCE_PATH "/textures/tree_leaves/all.png"});
+      blockTypes.push_back(std::make_unique<BlockType>("tree_leaves", BlockTypeAttributes{
+        .transparent = true,
+      }, std::array<std::shared_ptr<StreamingTexturesPart>, 6>{
+        treeLeavesTexture,
+        treeLeavesTexture,
+        treeLeavesTexture,
+        treeLeavesTexture,
+        treeLeavesTexture,
+        treeLeavesTexture,
+      }));
+    }
 
     // Construct block mesh
 
     BlocksMap blocksMap(glm::ivec3(-7, 0, -7), glm::ivec3(16, 8, 16));
-    blocksMap[glm::ivec3(0, 1, 0)].emplace(Block(*blockTypes[0]));
-    blocksMap[glm::ivec3(0, 0, 0)].emplace(Block(*blockTypes[1]));
-    blocksMap[glm::ivec3(1, 0, 0)].emplace(Block(*blockTypes[1]));
-    blocksMap[glm::ivec3(0, 0, 1)].emplace(Block(*blockTypes[0]));
-    blocksMap[glm::ivec3(-1, 0, 0)].emplace(Block(*blockTypes[1]));
-    blocksMap[glm::ivec3(0, 1, -1)].emplace(Block(*blockTypes[0]));
+
+    for (int i = 0; i < 100; i++) {
+      blocksMap[glm::ivec3(-5 + i % 10, 0, -5 + i / 10)].emplace(Block(*blockTypes[1]));
+      blocksMap[glm::ivec3(-5 + i % 10, 1, -5 + i / 10)].emplace(Block(*blockTypes[0]));
+    }
+    for (int i = 0; i < 3; i++) {
+      blocksMap[glm::ivec3(2, 2 + i, 2)].emplace(Block(*blockTypes[2]));
+    }
+    blocksMap[glm::ivec3(2, 5, 2)].emplace(Block(*blockTypes[3]));
+    blocksMap[glm::ivec3(1, 4, 2)].emplace(Block(*blockTypes[3]));
+    blocksMap[glm::ivec3(3, 4, 2)].emplace(Block(*blockTypes[3]));
+    blocksMap[glm::ivec3(2, 4, 1)].emplace(Block(*blockTypes[3]));
+    blocksMap[glm::ivec3(2, 4, 3)].emplace(Block(*blockTypes[3]));
+
     auto blocksMesh = BlocksMesh::buildFromBlocksMap(blocksMap);
 
     GLuint vertexArrayId;
@@ -157,7 +196,7 @@ int main(int argc, char* argv[]) {
       blockTextures.bind();
 
       glm::mat4 m = glm::rotate(glm::mat4(1.f), static_cast<float>(glfwGetTime()) * 2.f * 0.1f * glm::pi<float>(), glm::vec3(0.f, 1.f, 0.f));
-      glm::mat4 v = glm::rotate(glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, -10.f)), glm::pi<float>() / 9.f, glm::vec3(1.f, 0.f, 0.f));
+      glm::mat4 v = glm::rotate(glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, -20.f)), glm::pi<float>() / 9.f, glm::vec3(1.f, 0.f, 0.f));
       glm::mat4 p = glm::perspective(glm::pi<float>() / 4.f, ratio, 0.1f, 100.f);
       glm::mat4 mvp = p * v * m;
 
