@@ -194,10 +194,14 @@ int main(int argc, char* argv[]) {
     if (!programLinkStatus) throw ApplicationException("Program linking failed");
 
     GLint mvpLocation = glGetUniformLocation(shaderProgramId, "MVP");
+    GLint atlasCellCountLocation = glGetUniformLocation(shaderProgramId, "atlasCellCount");
+    GLint texSizeLocation = glGetUniformLocation(shaderProgramId, "texSize");
     GLint colorMapLocation = glGetUniformLocation(shaderProgramId, "colorMap");
+
     GLint vPosLocation = glGetAttribLocation(shaderProgramId, "vPos");
     GLint vNormLocation = glGetAttribLocation(shaderProgramId, "vNorm");
     GLint vTexCoordLocation = glGetAttribLocation(shaderProgramId, "vTexCoord");
+    GLint vTexPartLocationLocation = glGetAttribLocation(shaderProgramId, "vTexPartLocation");
 
     glEnableVertexAttribArray(vPosLocation);
     glVertexAttribPointer(vPosLocation, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, x));
@@ -205,6 +209,8 @@ int main(int argc, char* argv[]) {
     glVertexAttribPointer(vNormLocation, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, nx));
     glEnableVertexAttribArray(vTexCoordLocation);
     glVertexAttribPointer(vTexCoordLocation, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, u));
+    glEnableVertexAttribArray(vTexPartLocationLocation);
+    glVertexAttribIPointer(vTexPartLocationLocation, 2, GL_UNSIGNED_INT, sizeof(Vertex), (void*) offsetof(Vertex, tx));
 
     while (!glfwWindowShouldClose(window)) {
       float ratio;
@@ -224,6 +230,8 @@ int main(int argc, char* argv[]) {
       glUseProgram(shaderProgramId);
       glUniformMatrix4fv(mvpLocation, 1, GL_FALSE, glm::value_ptr(mvp));
       glUniform1i(colorMapLocation, 0);
+      glUniform2ui(atlasCellCountLocation, blockTextures.cellCountPerSide(), blockTextures.cellCountPerSide());
+      glUniform2ui(texSizeLocation, blockTextures.cellSideLength(), blockTextures.cellSideLength());
       glDrawElements(GL_TRIANGLES, blocksMesh.vertexIndices.size(), GL_UNSIGNED_INT, 0);
 
       glfwSwapBuffers(window);

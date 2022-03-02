@@ -6,10 +6,10 @@ BlockFaceDefinition::BlockFaceDefinition(std::vector<Vertex>&& vertices_, std::v
   _vertexIndices = vertexIndices_;
   _texturePartPtr = texturePartPtr_;
 
-  // Adjust texture coordinates according to the StreamingTexturesPart
+  // Allow the shader to adjust texture coordinates according to the StreamingTexturesPart
   for (Vertex& vertex : _vertices) {
-    vertex.u = _texturePartPtr->scaleU(vertex.u);
-    vertex.v = _texturePartPtr->scaleV(vertex.v);
+    vertex.tx = _texturePartPtr->xLocation();
+    vertex.ty = _texturePartPtr->yLocation();
   }
 }
 

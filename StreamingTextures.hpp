@@ -70,11 +70,6 @@ public:
   StreamingTextures& manager() const { return _manager; }
   size_t xLocation() const { return _xLocation; }
   size_t yLocation() const { return _yLocation; }
-  size_t sideLength() const { return _manager._cellSideLength; }
-  size_t xOffset() const { return _xLocation * sideLength(); }
-  size_t yOffset() const { return _yLocation * sideLength(); }
-  float scaleU(float u) { return (u + _xLocation) / _manager._cellCountPerSide; }
-  float scaleV(float v) { return (v + _yLocation) / _manager._cellCountPerSide; }
 
   friend class StreamingTextures;
 };
