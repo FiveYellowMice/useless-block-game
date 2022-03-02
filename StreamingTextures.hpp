@@ -24,6 +24,9 @@ public:
   StreamingTextures(size_t cellSideLength_, size_t cellCountPerSide_, std::vector<GLenum>&& textureFormats_, std::function<void(size_t, GLuint)> configFunc = {});
   ~StreamingTextures();
 
+  StreamingTextures(const StreamingTextures&) = delete;
+  StreamingTextures& operator=(const StreamingTextures&) = delete;
+
   size_t cellSideLength() const { return _cellSideLength; }
   size_t cellCountPerSide() const { return _cellCountPerSide; }
   const std::vector<GLuint>& textureIds() const { return _textureIds; }
@@ -56,9 +59,8 @@ private:
   StreamingTexturesPart(StreamingTextures& manager_, size_t xLocation_, size_t yLocation_) : _manager(manager_), _xLocation(xLocation_), _yLocation(yLocation_) {}
 
 public:
-  // Do not allow an instance to be copied or moved
   StreamingTexturesPart(const StreamingTexturesPart&) = delete;
-  StreamingTexturesPart(StreamingTexturesPart&&) = delete;
+  StreamingTexturesPart& operator=(const StreamingTexturesPart&) = delete;
 
   ~StreamingTexturesPart() {
     // Remove itself from the manager

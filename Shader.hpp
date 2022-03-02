@@ -13,6 +13,9 @@ public:
   Shader(GLenum type_);
   ~Shader();
 
+  Shader(const Shader&) = delete;
+  Shader& operator=(const Shader&) = delete;
+
   void loadFromString(const char* source);
   void loadFromString(const std::string& source);
   void loadFromFile(const std::string& filename);
