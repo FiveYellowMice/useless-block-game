@@ -18,6 +18,17 @@
 #include "Vertex.hpp"
 #include "build_config.h"
 
+float lastFrameTime;
+float deltaFrameTime;
+glm::vec2 lastMousePos;
+
+glm::vec3 playerPosition(0.f, 3.f, -20.f);
+glm::vec3 playerVelocity(0.f);
+glm::vec3 playerLookDirection(0.f, 0.f, 1.f);
+
+float playerPitch;
+float playerYaw;
+
 int main(int argc, char* argv[]) {
   (void) argc;
   (void) argv;
@@ -76,9 +87,37 @@ int main(int argc, char* argv[]) {
             glfwSetWindowShouldClose(window, GLFW_TRUE);
           }
           break;
+        case GLFW_KEY_W:
+          if (action == GLFW_PRESS) {
+            playerVelocity += playerLookDirection * 5.f;
+          } else if (action == GLFW_RELEASE) {
+            playerVelocity -= playerLookDirection * 5.f;
+          }
+          break;
+        case GLFW_KEY_S:
+          if (action == GLFW_PRESS) {
+            playerVelocity -= playerLookDirection * 5.f;
+          } else if (action == GLFW_RELEASE) {
+            playerVelocity += playerLookDirection * 5.f;
+          }
+          break;
         default:
           ;
       }
+    });
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPosCallback(window, [] (GLFWwindow* window, double xpos, double ypos) {
+      glm::vec2 currentMousePos((float) xpos, (float) ypos);
+      glm::vec2 deltaMousePos = currentMousePos - lastMousePos;
+      lastMousePos = currentMousePos;
+
+      playerYaw = playerYaw + deltaMousePos.x * 0.001f;
+      playerPitch = glm::clamp(playerPitch - deltaMousePos.y * 0.001f, -glm::pi<float>() / 2 + 0.001f, glm::pi<float>() / 2 - 0.001f);
+
+      playerLookDirection.x = glm::cos(playerYaw) * glm::cos(playerPitch);
+      playerLookDirection.y = glm::sin(playerPitch);
+      playerLookDirection.z = glm::sin(playerYaw) * glm::cos(playerPitch);
     });
 
     glfwSwapInterval(1);
@@ -218,12 +257,18 @@ int main(int argc, char* argv[]) {
       glfwGetFramebufferSize(window, &width, &height);
       ratio = width / (float) height;
 
+      float currentFrameTime = glfwGetTime();
+      deltaFrameTime = currentFrameTime - lastFrameTime;
+      lastFrameTime = currentFrameTime;
+
+      playerPosition += playerVelocity * deltaFrameTime;
+
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
       blockTextures.bind();
 
-      glm::mat4 m = glm::rotate(glm::mat4(1.f), static_cast<float>(glfwGetTime()) * 2.f * 0.1f * glm::pi<float>(), glm::vec3(0.f, 1.f, 0.f));
-      glm::mat4 v = glm::rotate(glm::translate(glm::mat4(1.f), glm::vec3(0.f, 0.f, -20.f)), glm::pi<float>() / 9.f, glm::vec3(1.f, 0.f, 0.f));
+      glm::mat4 m(1.f);
+      glm::mat4 v = glm::lookAt(playerPosition, playerPosition + playerLookDirection, glm::vec3(0.f, 1.f, 0.f));
       glm::mat4 p = glm::perspective(glm::pi<float>() / 4.f, ratio, 0.1f, 100.f);
       glm::mat4 mvp = p * v * m;
 
