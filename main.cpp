@@ -16,18 +16,14 @@
 #include "BlocksMap.hpp"
 #include "BlocksMesh.hpp"
 #include "Vertex.hpp"
+#include "Entity.hpp"
 #include "build_config.h"
 
 float lastFrameTime;
 float deltaFrameTime;
 glm::vec2 lastMousePos;
 
-glm::vec3 playerPosition(0.f, 3.f, -20.f);
-glm::vec3 playerVelocity(0.f);
-glm::vec3 playerLookDirection(0.f, 0.f, 1.f);
-
-float playerPitch;
-float playerYaw;
+Entity player("player");
 
 int main(int argc, char* argv[]) {
   (void) argc;
@@ -87,20 +83,6 @@ int main(int argc, char* argv[]) {
             glfwSetWindowShouldClose(window, GLFW_TRUE);
           }
           break;
-        case GLFW_KEY_W:
-          if (action == GLFW_PRESS) {
-            playerVelocity += playerLookDirection * 5.f;
-          } else if (action == GLFW_RELEASE) {
-            playerVelocity -= playerLookDirection * 5.f;
-          }
-          break;
-        case GLFW_KEY_S:
-          if (action == GLFW_PRESS) {
-            playerVelocity -= playerLookDirection * 5.f;
-          } else if (action == GLFW_RELEASE) {
-            playerVelocity += playerLookDirection * 5.f;
-          }
-          break;
         default:
           ;
       }
@@ -112,12 +94,10 @@ int main(int argc, char* argv[]) {
       glm::vec2 deltaMousePos = currentMousePos - lastMousePos;
       lastMousePos = currentMousePos;
 
-      playerYaw = playerYaw + deltaMousePos.x * 0.001f;
-      playerPitch = glm::clamp(playerPitch - deltaMousePos.y * 0.001f, -glm::pi<float>() / 2 + 0.001f, glm::pi<float>() / 2 - 0.001f);
-
-      playerLookDirection.x = glm::cos(playerYaw) * glm::cos(playerPitch);
-      playerLookDirection.y = glm::sin(playerPitch);
-      playerLookDirection.z = glm::sin(playerYaw) * glm::cos(playerPitch);
+      glm::vec2 playerRotation = player.rotation();
+      playerRotation.y = playerRotation.y + deltaMousePos.x * 0.001f;
+      playerRotation.x = glm::clamp(playerRotation.x - deltaMousePos.y * 0.001f, -glm::pi<float>() / 2 + 0.001f, glm::pi<float>() / 2 - 0.001f);
+      player.rotation(playerRotation);
     });
 
     glfwSwapInterval(1);
@@ -251,6 +231,9 @@ int main(int argc, char* argv[]) {
     glEnableVertexAttribArray(vTexPartLocationLocation);
     glVertexAttribIPointer(vTexPartLocationLocation, 2, GL_UNSIGNED_INT, sizeof(Vertex), (void*) offsetof(Vertex, tx));
 
+    player.position = glm::vec3(0.f, 3.f, -20.f);
+    player.direction(glm::vec3(0.f, 0.f, 1.f));
+
     while (!glfwWindowShouldClose(window)) {
       float ratio;
       int width, height;
@@ -261,14 +244,28 @@ int main(int argc, char* argv[]) {
       deltaFrameTime = currentFrameTime - lastFrameTime;
       lastFrameTime = currentFrameTime;
 
-      playerPosition += playerVelocity * deltaFrameTime;
+      // Game logic
+      if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        player.desiredVelocity += player.direction() * 5.f;
+      if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        player.desiredVelocity -= player.direction() * 5.f;
+      if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        player.desiredVelocity -= glm::normalize(glm::cross(player.direction(), glm::vec3(0.f, 1.f, 0.f))) * 5.f;
+      if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        player.desiredVelocity += glm::normalize(glm::cross(player.direction(), glm::vec3(0.f, 1.f, 0.f))) * 5.f;
+      if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        player.desiredVelocity += glm::vec3(0.f, 1.f, 0.f) * 5.f;
+      if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        player.desiredVelocity -= glm::vec3(0.f, 1.f, 0.f) * 5.f;
+      player.processFrame(deltaFrameTime);
 
+      // Rendering
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
       blockTextures.bind();
 
       glm::mat4 m(1.f);
-      glm::mat4 v = glm::lookAt(playerPosition, playerPosition + playerLookDirection, glm::vec3(0.f, 1.f, 0.f));
+      glm::mat4 v = glm::lookAt(player.position, player.position + player.direction(), glm::vec3(0.f, 1.f, 0.f));
       glm::mat4 p = glm::perspective(glm::pi<float>() / 4.f, ratio, 0.1f, 100.f);
       glm::mat4 mvp = p * v * m;
 
