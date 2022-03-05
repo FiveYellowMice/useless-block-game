@@ -3,12 +3,11 @@
 #include <vector>
 #include <array>
 #include <GL/glew.h>
-#include "Vertex.hpp"
 #include "BlocksMap.hpp"
 
 class BlocksMesh {
 public:
-  std::vector<Vertex> vertices;
+  std::vector<BlockVertex> vertices;
   std::vector<GLuint> vertexIndices;
 
   static BlocksMesh buildFromBlocksMap(const BlocksMap& blocksMap);

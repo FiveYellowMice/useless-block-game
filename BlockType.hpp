@@ -5,20 +5,26 @@
 #include <vector>
 #include <memory>
 #include <GL/glew.h>
-#include "Vertex.hpp"
 #include "StreamingTextures.hpp"
+
+struct BlockVertex {
+  float x, y, z;
+  float nx, ny, nz;
+  float u, v;
+  GLuint tx, ty;
+};
 
 // Definition of each face on the block
 class BlockFaceDefinition {
 private:
-  std::vector<Vertex> _vertices;
+  std::vector<BlockVertex> _vertices;
   std::vector<GLuint> _vertexIndices;
   std::shared_ptr<StreamingTexturesPart> _texturePartPtr;
 
 public:
-  BlockFaceDefinition(std::vector<Vertex>&& vertices_, std::vector<GLuint>&& vertexIndices_, std::shared_ptr<StreamingTexturesPart> texturePartPtr_);
+  BlockFaceDefinition(std::vector<BlockVertex>&& vertices_, std::vector<GLuint>&& vertexIndices_, std::shared_ptr<StreamingTexturesPart> texturePartPtr_);
 
-  const std::vector<Vertex>& vertices() const { return _vertices; }
+  const std::vector<BlockVertex>& vertices() const { return _vertices; }
   const std::vector<GLuint>& vertexIndices() const { return _vertexIndices; }
   std::shared_ptr<StreamingTexturesPart> texturePartPtr() const { return _texturePartPtr; }
 };

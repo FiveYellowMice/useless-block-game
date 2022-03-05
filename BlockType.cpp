@@ -1,13 +1,13 @@
 #include <GL/glew.h>
 #include "BlockType.hpp"
 
-BlockFaceDefinition::BlockFaceDefinition(std::vector<Vertex>&& vertices_, std::vector<GLuint>&& vertexIndices_, std::shared_ptr<StreamingTexturesPart> texturePartPtr_) {
+BlockFaceDefinition::BlockFaceDefinition(std::vector<BlockVertex>&& vertices_, std::vector<GLuint>&& vertexIndices_, std::shared_ptr<StreamingTexturesPart> texturePartPtr_) {
   _vertices = vertices_;
   _vertexIndices = vertexIndices_;
   _texturePartPtr = texturePartPtr_;
 
   // Allow the shader to adjust texture coordinates according to the StreamingTexturesPart
-  for (Vertex& vertex : _vertices) {
+  for (BlockVertex& vertex : _vertices) {
     vertex.tx = _texturePartPtr->xLocation();
     vertex.ty = _texturePartPtr->yLocation();
   }
@@ -28,7 +28,7 @@ BlockType::BlockType(std::string&& blockId_, BlockTypeAttributes&& attributes_, 
   _faces = std::vector<BlockFaceDefinition>();
   _faces.reserve(6);
 
-  const std::array<std::array<Vertex, 4>, 6> predefinedFullBlockFaceVertices = {{
+  const std::array<std::array<BlockVertex, 4>, 6> predefinedFullBlockFaceVertices = {{
     // X+
     {{
       { 0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f, 0.f, 0.f},
@@ -74,9 +74,9 @@ BlockType::BlockType(std::string&& blockId_, BlockTypeAttributes&& attributes_, 
   }};
 
   for (size_t i = 0; i < predefinedFullBlockFaceVertices.size(); i++) {
-    std::vector<Vertex> faceVertices;
+    std::vector<BlockVertex> faceVertices;
     faceVertices.reserve(4);
-    for (const Vertex& predefinedFaceVertex : predefinedFullBlockFaceVertices[i]) {
+    for (const BlockVertex& predefinedFaceVertex : predefinedFullBlockFaceVertices[i]) {
       faceVertices.push_back(predefinedFaceVertex);
     }
     _faces.push_back(BlockFaceDefinition(std::move(faceVertices), std::vector<GLuint>{0, 1, 2, 1, 3, 2}, faceTextures[i]));

@@ -17,7 +17,6 @@
 #include "BlocksMesh.hpp"
 #include "VAO.hpp"
 #include "GLBuffer.hpp"
-#include "Vertex.hpp"
 #include "Entity.hpp"
 #include "build_config.h"
 
@@ -105,6 +104,7 @@ int main(int argc, char* argv[]) {
     glfwSwapInterval(1);
     glEnable(GL_CULL_FACE);
     glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
 
     // Define block types, load block textures
 
@@ -202,12 +202,47 @@ int main(int argc, char* argv[]) {
     blocksShaderProgram.loadAndAttachShader(GL_FRAGMENT_SHADER, "shaders/blocks_frag.glsl");
     blocksShaderProgram.link();
 
-    blocksVao.enableAndSetAttribPointer(blocksShaderProgram.getAttribLocation("vPos"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, x));
-    blocksVao.enableAndSetAttribPointer(blocksShaderProgram.getAttribLocation("vNorm"), 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, nx));
-    blocksVao.enableAndSetAttribPointer(blocksShaderProgram.getAttribLocation("vTexCoord"), 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), offsetof(Vertex, u));
-    blocksVao.enableAndSetAttribIPointer(blocksShaderProgram.getAttribLocation("vTexPartLocation"), 2, GL_UNSIGNED_INT, sizeof(Vertex), offsetof(Vertex, tx));
+    blocksVao.enableAndSetAttribPointer(blocksShaderProgram.getAttribLocation("vPos"), 3, GL_FLOAT, GL_FALSE, sizeof(BlockVertex), offsetof(BlockVertex, x));
+    blocksVao.enableAndSetAttribPointer(blocksShaderProgram.getAttribLocation("vNorm"), 3, GL_FLOAT, GL_FALSE, sizeof(BlockVertex), offsetof(BlockVertex, nx));
+    blocksVao.enableAndSetAttribPointer(blocksShaderProgram.getAttribLocation("vTexCoord"), 2, GL_FLOAT, GL_FALSE, sizeof(BlockVertex), offsetof(BlockVertex, u));
+    blocksVao.enableAndSetAttribIPointer(blocksShaderProgram.getAttribLocation("vTexPartLocation"), 2, GL_UNSIGNED_INT, sizeof(BlockVertex), offsetof(BlockVertex, tx));
 
-    player.position = glm::vec3(0.f, 3.f, -20.f);
+    // Make skybox
+
+    VAO skyboxVao;
+    skyboxVao.bind();
+
+    GLBuffer skyboxVbo(GL_ARRAY_BUFFER);
+    skyboxVbo.bind();
+    skyboxVbo.sendData(std::array<glm::vec3, 8>{{
+      {-0.5f, -0.5f, -0.5f},
+      { 0.5f, -0.5f, -0.5f},
+      {-0.5f,  0.5f, -0.5f},
+      { 0.5f,  0.5f, -0.5f},
+      {-0.5f, -0.5f,  0.5f},
+      { 0.5f, -0.5f,  0.5f},
+      {-0.5f,  0.5f,  0.5f},
+      { 0.5f,  0.5f,  0.5f},
+    }}, GL_STATIC_DRAW);
+    GLBuffer skyboxIbo(GL_ELEMENT_ARRAY_BUFFER);
+    skyboxIbo.bind();
+    skyboxIbo.sendData(std::array<GLuint, 36>{
+      0, 1, 3, 0, 3, 2, // Z-
+      7, 5, 4, 6, 7, 4, // Z+
+      6, 4, 0, 2, 6, 0, // X-
+      3, 1, 5, 7, 3, 5, // X+
+      4, 5, 1, 4, 1, 0, // Y-
+      3, 7, 6, 2, 3, 6, // Y+
+    }, GL_STATIC_DRAW);
+
+    ShaderProgram skyboxShaderProgram;
+    skyboxShaderProgram.loadAndAttachShader(GL_VERTEX_SHADER, "shaders/skybox_vert.glsl");
+    skyboxShaderProgram.loadAndAttachShader(GL_FRAGMENT_SHADER, "shaders/skybox_frag.glsl");
+    skyboxShaderProgram.link();
+
+    skyboxVao.enableAndSetAttribPointer(skyboxShaderProgram.getAttribLocation("vPos"), 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), 0);
+
+    player.position = glm::vec3(0.f, 3.f, 0.f);
     player.direction(glm::vec3(0.f, 0.f, 1.f));
 
     while (!glfwWindowShouldClose(window)) {
@@ -238,12 +273,14 @@ int main(int argc, char* argv[]) {
       // Rendering
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-      blockTextures.bind();
-
       glm::mat4 m(1.f);
       glm::mat4 v = glm::lookAt(player.position, player.position + player.direction(), glm::vec3(0.f, 1.f, 0.f));
       glm::mat4 p = glm::perspective(glm::pi<float>() / 4.f, ratio, 0.1f, 100.f);
       glm::mat4 mvp = p * v * m;
+
+      // Draw blocks mesh
+      blocksVao.bind();
+      blockTextures.bind();
 
       blocksShaderProgram.use();
       blocksShaderProgram.setUniform("MVP", mvp);
@@ -252,6 +289,12 @@ int main(int argc, char* argv[]) {
       blocksShaderProgram.setUniform("texSize", (GLuint) blockTextures.cellSideLength(), (GLuint) blockTextures.cellSideLength());
 
       glDrawElements(GL_TRIANGLES, blocksMesh.vertexIndices.size(), GL_UNSIGNED_INT, 0);
+
+      // Draw skybox
+      skyboxVao.bind();
+      skyboxShaderProgram.use();
+      skyboxShaderProgram.setUniform("transMat", p * glm::mat4(glm::mat3(v)));
+      glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
 
       glfwSwapBuffers(window);
       glfwPollEvents();
