@@ -6,31 +6,32 @@
 #include "build_config.h"
 
 Shader::Shader(GLenum type_) {
-  type = type_;
-  id = glCreateShader(type);
+  _type = type_;
+  _id = glCreateShader(_type);
 }
 
 Shader::~Shader() {
-  glDeleteShader(id);
+  glDeleteShader(_id);
 }
 
 void Shader::loadFromString(const char* source) {
-  glShaderSource(id, 1, &source, NULL);
-  glCompileShader(id);
+  glShaderSource(_id, 1, &source, NULL);
+  glCompileShader(_id);
 
   GLint compileStatus;
-  glGetShaderiv(id, GL_COMPILE_STATUS, &compileStatus);
+  glGetShaderiv(_id, GL_COMPILE_STATUS, &compileStatus);
 
   if (!compileStatus) {
+    std::string infoLog;
     GLint infoLogLength;
-    glGetShaderiv(id, GL_INFO_LOG_LENGTH, &infoLogLength);
-    GLchar* infoLog = new GLchar[infoLogLength];
-    glGetShaderInfoLog(id, infoLogLength, NULL, infoLog);
-
-    std::string msg = Shader::getShaderTypeStr(type);
+    glGetShaderiv(_id, GL_INFO_LOG_LENGTH, &infoLogLength);
+    if (infoLogLength) {
+      infoLog.resize(infoLogLength - 1);
+      glGetShaderInfoLog(_id, infoLogLength, NULL, infoLog.data());
+    }
+    std::string msg = Shader::getShaderTypeStr(_type);
     msg[0] = toupper(msg[0]);
     msg = msg + " shader compilation failed: " + infoLog;
-    delete[] infoLog;
     throw ShaderException(msg);
   }
 }
@@ -66,4 +67,45 @@ const char* Shader::getShaderTypeStr(GLenum shaderType) {
     default:
       return "";
   }
+}
+
+ShaderProgram::ShaderProgram() {
+  _id = glCreateProgram();
+}
+
+ShaderProgram::~ShaderProgram() {
+  glDeleteProgram(_id);
+}
+
+void ShaderProgram::attachShader(std::shared_ptr<Shader> shader) {
+  _shaders.push_back(shader);
+  glAttachShader(_id, shader->id());
+}
+
+void ShaderProgram::loadAndAttachShader(GLenum shaderType, const std::string& filename) {
+  auto shader = std::make_shared<Shader>(shaderType);
+  shader->loadFromFile(filename);
+  attachShader(shader);
+}
+
+void ShaderProgram::link() {
+  glLinkProgram(_id);
+  GLint programLinkStatus;
+  glGetProgramiv(_id, GL_LINK_STATUS, &programLinkStatus);
+  
+  if (!programLinkStatus) {
+    std::string infoLog;
+    GLint infoLogLength;
+    glGetProgramiv(_id, GL_INFO_LOG_LENGTH, &infoLogLength);
+    if (infoLogLength) {
+      infoLog.resize(infoLogLength - 1);
+      glGetProgramInfoLog(_id, infoLogLength, NULL, infoLog.data());
+    }
+    std::string msg = "Program linking failed: " + infoLog;
+    throw ShaderException(msg);
+  }
+}
+
+void ShaderProgram::use() {
+  glUseProgram(_id);
 }

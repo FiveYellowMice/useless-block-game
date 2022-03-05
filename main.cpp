@@ -199,28 +199,20 @@ int main(int argc, char* argv[]) {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, vertexIndexBufferId);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, blocksMesh.vertexIndices.size() * sizeof(decltype(blocksMesh.vertexIndices)::value_type), blocksMesh.vertexIndices.data(), GL_STATIC_DRAW);
 
-    Shader vertexShader(GL_VERTEX_SHADER);
-    vertexShader.loadFromFile("shaders/vert.glsl");
-    Shader fragmentShader(GL_FRAGMENT_SHADER);
-    fragmentShader.loadFromFile("shaders/frag.glsl");
+    ShaderProgram blocksShaderProgram;
+    blocksShaderProgram.loadAndAttachShader(GL_VERTEX_SHADER, "shaders/blocks_vert.glsl");
+    blocksShaderProgram.loadAndAttachShader(GL_FRAGMENT_SHADER, "shaders/blocks_frag.glsl");
+    blocksShaderProgram.link();
 
-    GLuint shaderProgramId = glCreateProgram();
-    glAttachShader(shaderProgramId, vertexShader.id);
-    glAttachShader(shaderProgramId, fragmentShader.id);
-    glLinkProgram(shaderProgramId);
-    GLint programLinkStatus;
-    glGetProgramiv(shaderProgramId, GL_LINK_STATUS, &programLinkStatus);
-    if (!programLinkStatus) throw ApplicationException("Program linking failed");
+    GLint mvpLocation = glGetUniformLocation(blocksShaderProgram.id(), "MVP");
+    GLint atlasCellCountLocation = glGetUniformLocation(blocksShaderProgram.id(), "atlasCellCount");
+    GLint texSizeLocation = glGetUniformLocation(blocksShaderProgram.id(), "texSize");
+    GLint colorMapLocation = glGetUniformLocation(blocksShaderProgram.id(), "colorMap");
 
-    GLint mvpLocation = glGetUniformLocation(shaderProgramId, "MVP");
-    GLint atlasCellCountLocation = glGetUniformLocation(shaderProgramId, "atlasCellCount");
-    GLint texSizeLocation = glGetUniformLocation(shaderProgramId, "texSize");
-    GLint colorMapLocation = glGetUniformLocation(shaderProgramId, "colorMap");
-
-    GLint vPosLocation = glGetAttribLocation(shaderProgramId, "vPos");
-    GLint vNormLocation = glGetAttribLocation(shaderProgramId, "vNorm");
-    GLint vTexCoordLocation = glGetAttribLocation(shaderProgramId, "vTexCoord");
-    GLint vTexPartLocationLocation = glGetAttribLocation(shaderProgramId, "vTexPartLocation");
+    GLint vPosLocation = glGetAttribLocation(blocksShaderProgram.id(), "vPos");
+    GLint vNormLocation = glGetAttribLocation(blocksShaderProgram.id(), "vNorm");
+    GLint vTexCoordLocation = glGetAttribLocation(blocksShaderProgram.id(), "vTexCoord");
+    GLint vTexPartLocationLocation = glGetAttribLocation(blocksShaderProgram.id(), "vTexPartLocation");
 
     glEnableVertexAttribArray(vPosLocation);
     glVertexAttribPointer(vPosLocation, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*) offsetof(Vertex, x));
@@ -269,7 +261,7 @@ int main(int argc, char* argv[]) {
       glm::mat4 p = glm::perspective(glm::pi<float>() / 4.f, ratio, 0.1f, 100.f);
       glm::mat4 mvp = p * v * m;
 
-      glUseProgram(shaderProgramId);
+      blocksShaderProgram.use();
       glUniformMatrix4fv(mvpLocation, 1, GL_FALSE, glm::value_ptr(mvp));
       glUniform1i(colorMapLocation, 0);
       glUniform2ui(atlasCellCountLocation, blockTextures.cellCountPerSide(), blockTextures.cellCountPerSide());
