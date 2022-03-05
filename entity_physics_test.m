@@ -20,20 +20,13 @@ targetVelocity(4/deltaFrameTime+1 : 6/deltaFrameTime) = 0;
 for i = 2 : nFrames
   % Try to reach target velocity
   if abs(targetVelocity(i-1) - velocity(i-1)) > 0.001
-    acceleration(i) += sign(targetVelocity(i-1) - velocity(i-1)) * 7;
+    acceleration(i) += 2/pi * atan(4 * (targetVelocity(i-1) - velocity(i-1))) * 8;
   end
   
   % Friction/Drag
-  resistAccel = -sign(velocity(i-1)) * (1.1 + velocity(i-1)^2 * 0.01);
+  acceleration(i) -= 2/pi * atan(velocity(i-1)) * (2.1 + velocity(i-1)^2 * 0.01);
   
   velocity(i) = velocity(i-1) + acceleration(i) * deltaFrameTime;
-  % To avoid oscillating, if adding resistance would cause velocity to flip direction,
-  % treat it as the resistance has made the entity stop moving
-  if sign(velocity(i) + resistAccel * deltaFrameTime) == -sign(velocity(i))
-    velocity(i) = 0;
-  else
-    velocity(i) += resistAccel * deltaFrameTime;
-  end
   position(i) = position(i-1) + velocity(i) * deltaFrameTime;
 end
 
