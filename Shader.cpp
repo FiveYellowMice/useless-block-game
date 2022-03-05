@@ -5,15 +5,6 @@
 #include "Shader.hpp"
 #include "build_config.h"
 
-Shader::Shader(GLenum type_) {
-  _type = type_;
-  _id = glCreateShader(_type);
-}
-
-Shader::~Shader() {
-  glDeleteShader(_id);
-}
-
 void Shader::loadFromString(const char* source) {
   glShaderSource(_id, 1, &source, NULL);
   glCompileShader(_id);
@@ -69,25 +60,6 @@ const char* Shader::getShaderTypeStr(GLenum shaderType) {
   }
 }
 
-ShaderProgram::ShaderProgram() {
-  _id = glCreateProgram();
-}
-
-ShaderProgram::~ShaderProgram() {
-  glDeleteProgram(_id);
-}
-
-void ShaderProgram::attachShader(std::shared_ptr<Shader> shader) {
-  _shaders.push_back(shader);
-  glAttachShader(_id, shader->id());
-}
-
-void ShaderProgram::loadAndAttachShader(GLenum shaderType, const std::string& filename) {
-  auto shader = std::make_shared<Shader>(shaderType);
-  shader->loadFromFile(filename);
-  attachShader(shader);
-}
-
 void ShaderProgram::link() {
   glLinkProgram(_id);
   GLint programLinkStatus;
@@ -104,8 +76,4 @@ void ShaderProgram::link() {
     std::string msg = "Program linking failed: " + infoLog;
     throw ShaderException(msg);
   }
-}
-
-void ShaderProgram::use() {
-  glUseProgram(_id);
 }
